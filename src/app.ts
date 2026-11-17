@@ -7,6 +7,57 @@ import { compareConfigProof, createConfigProof, runNetworkDiagnostics, validConf
 
 export const app = express();
 app.disable('x-powered-by');
+
+// Run before the ordinary JSON middleware. serverless-http supplies a Buffer
+// on an already-finished request, which express.json() deliberately skips.
+const diagnosticBodyLimit = 2048;
+const readDiagnosticBody = express.raw({ type: () => true, limit: diagnosticBodyLimit, inflate: false });
+app.all('/api/health/db/diagnostics', (req, res, next) => {
+  res.set('Cache-Control', 'no-store');
+  const key = process.env.DIAGNOSTIC_KEY;
+  if (!key || req.get('x-diagnostic-key') !== key || req.method !== 'POST') {
+    res.status(404).json({ ok: false });
+    return;
+  }
+  if (!/^application\/json(?:\s*;\s*charset=(?:utf-8|"utf-8"))?\s*$/i.test(req.get('content-type') ?? '') ||
+      !['identity', undefined].includes(req.get('content-encoding'))) {
+    res.status(415).json({ ok: false });
+    return;
+  }
+  const length = req.get('content-length');
+  if (length !== undefined && (!/^\d+$/.test(length) || !Number.isSafeInteger(Number(length)))) {
+    res.status(400).json({ ok: false });
+    return;
+  }
+  if (length !== undefined && Number(length) > diagnosticBodyLimit) {
+    res.status(413).json({ ok: false });
+    return;
+  }
+  if (Buffer.isBuffer(req.body)) next();
+  else readDiagnosticBody(req, res, next);
+}, (req, res, next) => {
+  if (!Buffer.isBuffer(req.body) || req.body.length === 0) {
+    res.status(400).json({ ok: false });
+    return;
+  }
+  if (req.body.length > diagnosticBodyLimit) {
+    res.status(413).json({ ok: false });
+    return;
+  }
+  const length = req.get('content-length');
+  if (length !== undefined && Number(length) !== req.body.length) {
+    res.status(400).json({ ok: false });
+    return;
+  }
+  try {
+    req.body = JSON.parse(new TextDecoder('utf-8', { fatal: true }).decode(req.body));
+  } catch {
+    res.status(400).json({ ok: false });
+    return;
+  }
+  next();
+});
+
 app.use(express.json({ limit: '32kb' }));
 app.use(cors({ origin: (origin, callback) => {
   const allowed = process.env.CORS_ORIGIN;
@@ -81,7 +132,8 @@ app.post('/api/health/db/diagnostics', async (req, res) => {
 const diagnosticInputError: ErrorRequestHandler = (_error, req, res, _next) => {
   res.set('Cache-Control', 'no-store');
   const key = process.env.DIAGNOSTIC_KEY;
-  res.status(!key || req.get('x-diagnostic-key') !== key ? 404 : 400).json({ ok: false });
+  const status = (_error as { status?: unknown } | null)?.status;
+  res.status(!key || req.get('x-diagnostic-key') !== key ? 404 : status === 413 ? 413 : 400).json({ ok: false });
 };
 app.use('/api/health/db/diagnostics', diagnosticInputError);
 
