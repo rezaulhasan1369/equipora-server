@@ -1,6 +1,7 @@
 import express from 'express';
 import cors from 'cors';
 import { getClient } from './db.js';
+import { classifyDatabaseFailure } from './db-diagnostics.js';
 
 export const app = express();
 app.disable('x-powered-by');
@@ -23,11 +24,18 @@ app.get('/api/health/db', async (req, res) => {
     res.status(404).json({ ok: false });
     return;
   }
+  let stage: 'connect' | 'ping' = 'connect';
   try {
     const client = await getClient();
+    stage = 'ping';
     await client.db('equipora').command({ ping: 1 });
     res.json({ ok: true, database: 'reachable' });
-  } catch {
+  } catch (error: unknown) {
+    console.error(JSON.stringify({
+      event: 'database_health_failure',
+      stage,
+      category: classifyDatabaseFailure(error),
+    }));
     res.status(503).json({ ok: false, database: 'unavailable' });
   }
 });
