@@ -3,11 +3,12 @@ import { Resolver } from 'node:dns/promises';
 import { BlockList, createConnection, isIP } from 'node:net';
 import { connect as connectTls } from 'node:tls';
 import { MongoClient } from 'mongodb';
-import { DatabaseConfigurationError } from './db-diagnostics.js';
+import { DatabaseConfigurationError, classifyTransportFailure } from './db-diagnostics.js';
+import type { TransportFailureCategory } from './db-diagnostics.js';
 
 const fields = ['cluster', 'database', 'authentication', 'connectionOptions'] as const;
 export type ConfigProof = Record<typeof fields[number], string>;
-export type ProbeStatus = 'ok' | 'no_records' | 'timeout' | 'dns_error' | 'network_error' | 'certificate_error' | 'skipped';
+export type ProbeStatus = 'ok' | 'no_records' | 'timeout' | 'dns_error' | 'network_error' | 'skipped' | TransportFailureCategory;
 type Target = { name: string; port: number };
 type FamilyResult = { dns: ProbeStatus; tcp: ProbeStatus; tls: ProbeStatus };
 const STEP_MS = 1200;
@@ -113,13 +114,15 @@ export function probeTransport(target: Target, address: string, family: 4 | 6, s
       socket?.destroy();
       resolve({ tcp, tls });
     };
-    const abort = () => { if (tcp !== 'ok') tcp = 'timeout'; finish(tcp === 'ok' ? 'timeout' : 'skipped'); };
+    const abort = () => { if (tcp !== 'ok') tcp = 'timeout'; finish(tcp === 'ok' ? 'handshake_timeout' : 'skipped'); };
     if (signal.aborted) { abort(); return; }
     signal.addEventListener('abort', abort, { once: true });
     try {
       socket = createConnection({ host: address, port: target.port, family });
       timer = setTimeout(abort, STEP_MS);
-      socket.once('error', () => { if (tcp !== 'ok') tcp = 'network_error'; finish(tcp === 'ok' ? 'network_error' : 'skipped'); });
+      socket.once('error', error => { if (tcp !== 'ok') tcp = 'network_error'; finish(tcp === 'ok' ? classifyTransportFailure(error) : 'skipped'); });
+      socket.once('end', () => { if (!done) finish(tcp === 'ok' ? 'premature_close' : 'skipped'); });
+      socket.once('close', () => { if (!done) finish(tcp === 'ok' ? 'premature_close' : 'skipped'); });
       socket.once('connect', () => {
         if (done) return;
         tcp = 'ok';
@@ -128,11 +131,10 @@ export function probeTransport(target: Target, address: string, family: 4 | 6, s
         try {
           secure = connectTls({ socket, servername: target.name, rejectUnauthorized: true });
           secure.once('secureConnect', () => finish('ok'));
-          secure.once('error', error => {
-            const code = String((error as NodeJS.ErrnoException).code ?? '');
-            finish(/CERT|TLS_CERT|SELF_SIGNED|UNABLE_TO_VERIFY/.test(code) ? 'certificate_error' : 'network_error');
-          });
-        } catch { finish('network_error'); }
+          secure.once('error', error => finish(classifyTransportFailure(error)));
+          secure.once('end', () => finish('premature_close'));
+          secure.once('close', () => finish('premature_close'));
+        } catch (error) { finish(classifyTransportFailure(error)); }
       });
     } catch { tcp = 'network_error'; finish('skipped'); }
   });

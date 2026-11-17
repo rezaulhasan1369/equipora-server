@@ -99,7 +99,7 @@ test('TCP/TLS probes honor cancellation and close sockets', async () => {
   await once(server, 'connection');
   await new Promise(resolve => setImmediate(resolve));
   controller.abort();
-  assert.deepEqual(await pending, { tcp: 'ok', tls: 'timeout' });
+  assert.deepEqual(await pending, { tcp: 'ok', tls: 'handshake_timeout' });
   assert.deepEqual(await probeTransport(target, '192.0.2.1', 4, controller.signal), { tcp: 'timeout', tls: 'skipped' });
   for (const socket of sockets) socket.destroy();
   await new Promise<void>(resolve => server.close(() => resolve()));

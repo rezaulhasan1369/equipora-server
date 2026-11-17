@@ -4,6 +4,7 @@ import cors from 'cors';
 import { getClient } from './db.js';
 import { classifyDatabaseFailure } from './db-diagnostics.js';
 import { compareConfigProof, createConfigProof, runNetworkDiagnostics, validConfigProof } from './db-network-diagnostics.js';
+import { observeDriverConnection } from './db-driver-diagnostics.js';
 
 export const app = express();
 app.disable('x-powered-by');
@@ -122,7 +123,14 @@ app.post('/api/health/db/diagnostics', async (req, res) => {
     }
     const configuration = compareConfigProof(createConfigProof(uri, key), req.body.expected);
     const network = await runNetworkDiagnostics(uri);
-    res.json({ ok: true, configuration, network });
+    // Do not let a driver attempt bypass the probe's existing target validation.
+    const driverAllowed = network.supported && network.targetsAccepted === true && !network.truncated &&
+      network.servers.length > 0 && network.servers.every(server =>
+        [server.ipv4, server.ipv6].some(family => family.dns === 'ok') &&
+        [server.ipv4, server.ipv6].every(family => family.dns === 'ok' || family.dns === 'no_records'));
+    const driver = driverAllowed ? await observeDriverConnection() : { stage: 'skipped' };
+    console.error(JSON.stringify({ event: 'database_driver_diagnostic', ...driver }));
+    res.json({ ok: true, configuration, network, driver });
   } catch (error: unknown) {
     res.status(503).json({ ok: false, category: classifyDatabaseFailure(error) });
   } finally { diagnosticRunning = false; }

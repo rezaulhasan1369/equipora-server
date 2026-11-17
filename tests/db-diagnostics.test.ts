@@ -13,7 +13,7 @@ test('classifies specific nested causes without returning raw error content', ()
     [{ code: 'ETIMEDOUT' }, 'connection_timeout'],
     [{ name: 'MongoServerSelectionError' }, 'connection_timeout'],
     [{ code: 'ECONNREFUSED' }, 'network'],
-    [{ code: 'CERT_HAS_EXPIRED' }, 'tls'],
+    [{ code: 'CERT_HAS_EXPIRED' }, 'certificate_error'],
     [{ message: 'secret-canary', name: 'secret-canary', code: 'secret-canary' }, 'unknown'],
     [null, 'unknown'],
   ] as const;
