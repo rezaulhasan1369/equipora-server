@@ -3,25 +3,37 @@
   "version": "0.1.0",
   "private": true,
   "type": "module",
+  "engines": {
+    "node": ">=22.12.0"
+  },
   "scripts": {
     "dev": "tsx watch src/local.ts",
+    "dev:isolated": "node --import tsx scripts/dev-isolated.ts",
     "typecheck": "tsc --noEmit",
     "build:check": "tsc --noEmit",
+    "build": "tsc -p tsconfig.build.json",
     "test": "node --import tsx --test tests/*.test.ts",
-    "start": "node --import tsx src/local.ts"
+    "start": "node dist/local.js"
   },
   "dependencies": {
     "@netlify/blobs": "^11.1.9",
+    "better-auth": "^1.7.25",
     "cors": "^2.8.5",
     "dotenv": "^16.4.7",
     "express": "^5.1.0",
+    "jose": "^6.2.17",
     "mongodb": "^6.15.0",
-    "serverless-http": "^3.2.0"
+    "node-cron": "4.6.0",
+    "nodemailer": "10.6.0",
+    "serverless-http": "^3.2.0",
+    "stripe": "^23.1.0",
+    "zod": "^4.6.7"
   },
   "devDependencies": {
     "@types/cors": "^2.8.17",
     "@types/express": "^5.0.0",
     "@types/node": "^22.0.0",
+    "mongodb-memory-server": "^11.3.0",
     "tsx": "^4.19.0",
     "typescript": "^5.8.0"
   }
