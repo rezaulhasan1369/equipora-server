@@ -1,0 +1,777 @@
+{
+  "date": "2026-11-19",
+  "actualHistory": {
+    "client": 1,
+    "server": 8
+  },
+  "warning": "No staging, commits, linked-worktree creation or retrospective timeline reconstruction performed. This is a proposed forward review order. Whole-file git add is unsafe for repeated shared paths. Final-tree tests do not certify intermediate commits. Before each approved commit export/validate the cumulative index in isolation; combine inseparable groups and retain any honest count deficit. Never manufacture history.",
+  "crossRepositoryOrder": [
+    "Server S01-S04 before frontend integrated auth/CRUD tests",
+    "Client C01-C20 against isolated server",
+    "Server S05-S07 and corresponding client template/optional acceptance",
+    "Review Netlify automatic deploy effects before any push"
+  ],
+  "client": [
+    {
+      "id": "C01",
+      "message": "chore(client): prepare typed Next.js tooling and application contracts",
+      "dependsOn": [],
+      "files": [
+        "package.json",
+        "package-lock.json",
+        ".gitignore",
+        ".env.example",
+        "eslint.config.mjs",
+        "next.config.ts",
+        "postcss.config.mjs",
+        "lib/types.ts",
+        "app/style.css"
+      ],
+      "hunks": "Only base tokens/reset/container/form primitives in CSS; feature selectors stay with later features. Dependency lock regenerated from each cumulative package state, never edited manually.",
+      "validation": [
+        "npm run typecheck",
+        "npm run lint",
+        "npm run build",
+        "npm test once tests land"
+      ],
+      "snapshotStatus": "PROPOSED - cumulative staged snapshot not created or certified; validate an isolated snapshot before committing"
+    },
+    {
+      "id": "C02",
+      "message": "feat(api): add secure same-origin authentication and backend gateways",
+      "dependsOn": [
+        "C01"
+      ],
+      "files": [
+        "lib/api.ts",
+        "lib/auth-client.ts",
+        "lib/gateway-policy.ts",
+        "lib/gateway.ts",
+        "lib/server-session.ts",
+        "app/api/auth/[...path]/route.ts",
+        "app/api/backend/[...path]/route.ts",
+        "app/api/health/route.ts",
+        "tests/gateway-policy.test.mjs"
+      ],
+      "hunks": "Whole files; requires server S02 for integrated runtime checks.",
+      "validation": [
+        "npm run typecheck",
+        "npm run lint",
+        "npm run build",
+        "node --test tests/gateway-policy.test.mjs",
+        "foreign-Origin/redirect/diagnostic-proxy rejection"
+      ],
+      "snapshotStatus": "PROPOSED - cumulative staged snapshot not created or certified; validate an isolated snapshot before committing"
+    },
+    {
+      "id": "C03",
+      "message": "feat(session): provide shared session and accessible toast context",
+      "dependsOn": [
+        "C02"
+      ],
+      "files": [
+        "components/session.tsx",
+        "components/toast.tsx",
+        "app/layout.tsx"
+      ],
+      "hunks": "Only SessionProvider/ToastProvider imports/wrappers; keep shell/theme integration out until C17/C19.",
+      "validation": [
+        "npm run typecheck",
+        "npm run lint",
+        "npm run build",
+        "context mount/unmount smoke"
+      ],
+      "snapshotStatus": "PROPOSED - cumulative staged snapshot not created or certified; validate an isolated snapshot before committing"
+    },
+    {
+      "id": "C04",
+      "message": "feat(dashboard): add protected role workspace and database analytics",
+      "dependsOn": [
+        "C03"
+      ],
+      "files": [
+        "components/dashboard-shell.tsx",
+        "components/dashboard.tsx",
+        "app/dashboard/layout.tsx",
+        "app/dashboard/page.tsx",
+        "app/style.css"
+      ],
+      "hunks": "dashboard.tsx: imports/types/useData/State/Gate/Overview only, plus dashboard/sidebar/stat/chart CSS. Retain only imports used by selected exports.",
+      "validation": [
+        "npm run typecheck",
+        "npm run lint",
+        "npm run build",
+        "authenticated fixture GET /dashboard for each role",
+        "nonzero scoped /analytics assertions"
+      ],
+      "snapshotStatus": "PROPOSED - cumulative staged snapshot not created or certified; validate an isolated snapshot before committing"
+    },
+    {
+      "id": "C05",
+      "message": "feat(auth): add email and Google sign-in with required profile photo",
+      "dependsOn": [
+        "C04"
+      ],
+      "files": [
+        "components/auth-form.tsx",
+        "app/login/page.tsx",
+        "app/register/page.tsx",
+        "playwright.config.ts",
+        "tests/browser/assignment.spec.ts",
+        "tests/browser/f63-acceptance.spec.ts",
+        "app/style.css"
+      ],
+      "hunks": "Only auth helpers/cases from browser tests and auth-form CSS; do not stage unrelated test cases yet.",
+      "validation": [
+        "npm run typecheck",
+        "npm run lint",
+        "npm run build",
+        "registration/password/photo/upload cases",
+        "Google launch mocked; historical actual F2 acceptance remains separate"
+      ],
+      "snapshotStatus": "PROPOSED - cumulative staged snapshot not created or certified; validate an isolated snapshot before committing"
+    },
+    {
+      "id": "C06",
+      "message": "feat(catalog): integrate server filtering pagination and credited demo images",
+      "dependsOn": [
+        "C05"
+      ],
+      "files": [
+        "components/catalog.tsx",
+        "components/equipment-card.tsx",
+        "lib/equipment-image.ts",
+        "app/equipment/page.tsx",
+        "app/asset-credits/page.tsx",
+        "tests/equipment-image.test.mjs",
+        "public/assets/equipment/credits.json",
+        "public/assets/equipment/eqd-001.webp",
+        "public/assets/equipment/eqd-002.webp",
+        "public/assets/equipment/eqd-003.webp",
+        "public/assets/equipment/eqd-004.webp",
+        "public/assets/equipment/eqd-005.webp",
+        "public/assets/equipment/eqd-006.webp",
+        "public/assets/equipment/eqd-007.webp",
+        "public/assets/equipment/eqd-008.webp",
+        "public/assets/equipment/eqd-009.webp",
+        "public/assets/equipment/eqd-010.webp",
+        "public/assets/equipment/eqd-011.webp",
+        "public/assets/equipment/eqd-012.webp",
+        "public/assets/equipment/eqd-013.webp",
+        "public/assets/equipment/eqd-014.webp",
+        "public/assets/equipment/eqd-015.webp",
+        "public/assets/equipment/eqd-016.webp",
+        "public/assets/equipment/eqd-017.webp",
+        "public/assets/equipment/eqd-018.webp",
+        "public/assets/equipment/eqd-019.webp",
+        "public/assets/equipment/eqd-020.webp",
+        "public/assets/equipment/eqd-021.webp",
+        "public/assets/equipment/eqd-022.webp",
+        "public/assets/equipment/eqd-023.webp",
+        "public/assets/equipment/eqd-024.webp",
+        "public/assets/equipment/eqd-025.webp",
+        "public/assets/equipment/eqd-026.webp",
+        "public/assets/equipment/eqd-027.webp",
+        "public/assets/equipment/eqd-028.webp",
+        "public/assets/equipment/eqd-029.webp",
+        "public/assets/equipment/eqd-030.webp",
+        "app/style.css"
+      ],
+      "hunks": "Catalog/card/pager/image-credit styles only; all thirty image derivatives and exact per-image credits included together.",
+      "validation": [
+        "npm run typecheck",
+        "npm run lint",
+        "npm run build",
+        "filter/sort/search URL persistence",
+        "thirty catalog/six featured API assertions"
+      ],
+      "snapshotStatus": "PROPOSED - cumulative staged snapshot not created or certified; validate an isolated snapshot before committing"
+    },
+    {
+      "id": "C07",
+      "message": "feat(equipment): protect details and persist customer favorites",
+      "dependsOn": [
+        "C06"
+      ],
+      "files": [
+        "components/details.tsx",
+        "app/equipment/[id]/page.tsx",
+        "app/style.css",
+        "tests/browser/assignment.spec.ts"
+      ],
+      "hunks": "Details read-only data/loading/terms/favorite flow and associated imports/state only; booking handler/button/dialog deferred to C08.",
+      "validation": [
+        "npm run typecheck",
+        "npm run lint",
+        "npm run build",
+        "anonymous redirect and authenticated detail/favorite tests"
+      ],
+      "snapshotStatus": "PROPOSED - cumulative staged snapshot not created or certified; validate an isolated snapshot before committing"
+    },
+    {
+      "id": "C08",
+      "message": "feat(booking): add accessible rental dialog and availability checkout",
+      "dependsOn": [
+        "C07"
+      ],
+      "files": [
+        "components/details.tsx",
+        "app/style.css",
+        "tests/browser/assignment.spec.ts"
+      ],
+      "hunks": "Remaining book handler/modal/state/button and modal/quote CSS; no reinterpretation of production payment config.",
+      "validation": [
+        "npm run typecheck",
+        "npm run lint",
+        "npm run build",
+        "date/quantity quote",
+        "invalid dates/role denial/provider-unconfigured safe failure"
+      ],
+      "snapshotStatus": "PROPOSED - cumulative staged snapshot not created or certified; validate an isolated snapshot before committing"
+    },
+    {
+      "id": "C09",
+      "message": "feat(rentals): add scoped history pagination and cancellation feedback",
+      "dependsOn": [
+        "C08"
+      ],
+      "files": [
+        "components/dashboard.tsx",
+        "app/dashboard/rentals/page.tsx",
+        "app/style.css",
+        "tests/browser/f63-acceptance.spec.ts"
+      ],
+      "hunks": "Row/CheckoutHolds/Rentals and related imports/history styles; stage only matching history URL-state test case.",
+      "validation": [
+        "npm run typecheck",
+        "npm run lint",
+        "npm run build",
+        "customer separate start/end columns",
+        "15+3 actual scoped API pages; browser history response fixture explicitly labeled"
+      ],
+      "snapshotStatus": "PROPOSED - cumulative staged snapshot not created or certified; validate an isolated snapshot before committing"
+    },
+    {
+      "id": "C10",
+      "message": "feat(payments): render authoritative payment confirmation states",
+      "dependsOn": [
+        "C09"
+      ],
+      "files": [
+        "components/dashboard.tsx",
+        "app/payment/success/page.tsx",
+        "tests/browser/assignment.spec.ts"
+      ],
+      "hunks": "PaymentSuccess export and its related status test only.",
+      "validation": [
+        "npm run typecheck",
+        "npm run lint",
+        "npm run build",
+        "paid/pending/error result states",
+        "never confirm from redirect alone"
+      ],
+      "snapshotStatus": "PROPOSED - cumulative staged snapshot not created or certified; validate an isolated snapshot before committing"
+    },
+    {
+      "id": "C11",
+      "message": "feat(favorites): add customer saved-equipment workspace",
+      "dependsOn": [
+        "C10"
+      ],
+      "files": [
+        "components/dashboard.tsx",
+        "app/dashboard/favorites/page.tsx",
+        "tests/browser/assignment.spec.ts"
+      ],
+      "hunks": "Favorites export and customer favorite table tests.",
+      "validation": [
+        "npm run typecheck",
+        "npm run lint",
+        "npm run build",
+        "save/remove/view-details flow"
+      ],
+      "snapshotStatus": "PROPOSED - cumulative staged snapshot not created or certified; validate an isolated snapshot before committing"
+    },
+    {
+      "id": "C12",
+      "message": "feat(profile): edit all-role profile fields while protecting identity",
+      "dependsOn": [
+        "C11"
+      ],
+      "files": [
+        "components/dashboard.tsx",
+        "app/dashboard/profile/page.tsx",
+        "tests/browser/f62-fields.spec.ts"
+      ],
+      "hunks": "Profile export and matching field/persistence cases; read-only email explanation retained.",
+      "validation": [
+        "npm run typecheck",
+        "npm run lint",
+        "npm run build",
+        "name/image/phone/address persistence for all roles",
+        "email/role PATCH rejection"
+      ],
+      "snapshotStatus": "PROPOSED - cumulative staged snapshot not created or certified; validate an isolated snapshot before committing"
+    },
+    {
+      "id": "C13",
+      "message": "feat(owner): add bounded equipment image upload and listing editor",
+      "dependsOn": [
+        "C12"
+      ],
+      "files": [
+        "components/dashboard.tsx",
+        "app/dashboard/add-equipment/page.tsx",
+        "app/dashboard/equipment/[id]/edit/page.tsx",
+        "app/style.css",
+        "tests/browser/assignment.spec.ts"
+      ],
+      "hunks": "EquipmentForm export and associated imports/upload/form-meta styles and owner form test.",
+      "validation": [
+        "npm run typecheck",
+        "npm run lint",
+        "npm run build",
+        "required field checks",
+        "mocked upload + actual local listing submission/update"
+      ],
+      "snapshotStatus": "PROPOSED - cumulative staged snapshot not created or certified; validate an isolated snapshot before committing"
+    },
+    {
+      "id": "C14",
+      "message": "feat(equipment): manage owner listings and admin moderation",
+      "dependsOn": [
+        "C13"
+      ],
+      "files": [
+        "components/dashboard.tsx",
+        "app/dashboard/equipment/page.tsx",
+        "tests/browser/assignment.spec.ts"
+      ],
+      "hunks": "ManagementResult/ManagementPager/EquipmentManager exports and matching role/CRUD cases.",
+      "validation": [
+        "npm run typecheck",
+        "npm run lint",
+        "npm run build",
+        "Owner create/update/delete",
+        "Admin approve/reject/pending and update/delete",
+        "ownership/API guards"
+      ],
+      "snapshotStatus": "PROPOSED - cumulative staged snapshot not created or certified; validate an isolated snapshot before committing"
+    },
+    {
+      "id": "C15",
+      "message": "feat(admin): manage user roles and access with session revocation",
+      "dependsOn": [
+        "C14"
+      ],
+      "files": [
+        "components/dashboard.tsx",
+        "app/dashboard/users/page.tsx",
+        "tests/browser/f62-fields.spec.ts"
+      ],
+      "hunks": "UsersManager export and matching user columns/role-options assertions.",
+      "validation": [
+        "npm run typecheck",
+        "npm run lint",
+        "npm run build",
+        "customer/owner/admin role transitions",
+        "disable/revoked-session API assertions"
+      ],
+      "snapshotStatus": "PROPOSED - cumulative staged snapshot not created or certified; validate an isolated snapshot before committing"
+    },
+    {
+      "id": "C16",
+      "message": "feat(home): complete required marketplace sections and motion assets",
+      "dependsOn": [
+        "C15"
+      ],
+      "files": [
+        "components/home.tsx",
+        "components/motion-film.tsx",
+        "app/page.tsx",
+        "public/assets/motion/hero-equipment-orbit-poster.webp",
+        "public/assets/motion/hero-equipment-orbit.webm",
+        "public/assets/motion/how-it-works-poster.webp",
+        "public/assets/motion/how-it-works.webm",
+        "public/assets/motion/precision-equilibrium-poster.webp",
+        "public/assets/motion/precision-equilibrium.webm",
+        "app/style.css",
+        "tests/browser/f5-visual.spec.ts"
+      ],
+      "hunks": "Home/motion CSS and corresponding motion-only cases; preserve supplied binaries and exact original hashes.",
+      "validation": [
+        "npm run typecheck",
+        "npm run lint",
+        "npm run build",
+        "six featured/four disclosed reviews/two extras",
+        "reduced-motion, poster fallback and offscreen pause"
+      ],
+      "snapshotStatus": "PROPOSED - cumulative staged snapshot not created or certified; validate an isolated snapshot before committing"
+    },
+    {
+      "id": "C17",
+      "message": "feat(brand): integrate responsive navigation and cinematic footer",
+      "dependsOn": [
+        "C16"
+      ],
+      "files": [
+        "components/brand.tsx",
+        "components/shell.tsx",
+        "app/layout.tsx",
+        "app/privacy/page.tsx",
+        "app/terms/page.tsx",
+        "public/assets/branding/equipora-symbol-original-concept.png",
+        "public/assets/branding/equipora-symbol-slate-128.png",
+        "public/assets/branding/equipora-symbol-slate-256.png",
+        "public/assets/branding/equipora-symbol-slate-512.png",
+        "public/assets/branding/equipora-symbol-slate-64.png",
+        "public/assets/branding/equipora-symbol-white-128.png",
+        "public/assets/branding/equipora-symbol-white-256.png",
+        "public/assets/branding/equipora-symbol-white-512.png",
+        "public/assets/branding/equipora-symbol-white-64.png",
+        "public/assets/footer/footer-desktop.png",
+        "public/assets/footer/footer-desktop.webp",
+        "public/assets/footer/footer-mobile.png",
+        "public/assets/footer/footer-mobile.webp",
+        "public/assets/footer/footer-tablet.png",
+        "public/assets/footer/footer-tablet.webp",
+        "app/style.css",
+        "tests/browser/f51-footer.spec.ts"
+      ],
+      "hunks": "Brand/header/footer integration; initially omit floating-state hysteresis and theme toggle/head bootstrap until C18/C19. Include metadata icon paths only when corresponding assets land.",
+      "validation": [
+        "npm run typecheck",
+        "npm run lint",
+        "npm run build",
+        "full-width expanded brand/nav",
+        "responsive artwork, legal links and three home-targeted demo icons"
+      ],
+      "snapshotStatus": "PROPOSED - cumulative staged snapshot not created or certified; validate an isolated snapshot before committing"
+    },
+    {
+      "id": "C18",
+      "message": "feat(navbar): animate stable full-width to floating glass capsule",
+      "dependsOn": [
+        "C17"
+      ],
+      "files": [
+        "components/shell.tsx",
+        "app/style.css",
+        "tests/browser/floating-navbar.spec.ts"
+      ],
+      "hunks": "Floating Header effect/state and F5 navbar/F5.2 surface CSS hunks; do not touch footer or hero.",
+      "validation": [
+        "npm run typecheck",
+        "npm run lint",
+        "npm run build",
+        "112/80px hysteresis",
+        "eight sizes, restored geometry, keyboard/menu/resize/reduced motion"
+      ],
+      "snapshotStatus": "PROPOSED - cumulative staged snapshot not created or certified; validate an isolated snapshot before committing"
+    },
+    {
+      "id": "C19",
+      "message": "feat(theme): persist accessible light and dark mode with system fallback",
+      "dependsOn": [
+        "C18"
+      ],
+      "files": [
+        "components/theme-toggle.tsx",
+        "components/shell.tsx",
+        "app/layout.tsx",
+        "app/style.css",
+        "tests/browser/f63-acceptance.spec.ts"
+      ],
+      "hunks": "Theme import/control/static head initializer and dark-only CSS; stage matching theme tests including first-frame fallback.",
+      "validation": [
+        "npm run typecheck",
+        "npm run lint",
+        "npm run build",
+        "stored/system/cross-tab/blocked storage",
+        "public/dashboard/modal/table/footer contrast"
+      ],
+      "snapshotStatus": "PROPOSED - cumulative staged snapshot not created or certified; validate an isolated snapshot before committing"
+    },
+    {
+      "id": "C20",
+      "message": "test(client): consolidate acceptance coverage and release guidance",
+      "dependsOn": [
+        "C19"
+      ],
+      "files": [
+        "app/loading.tsx",
+        "app/error.tsx",
+        "app/not-found.tsx",
+        "README.md",
+        "tests/browser/assignment.spec.ts",
+        "tests/browser/f5-visual.spec.ts",
+        "tests/browser/f62-fields.spec.ts",
+        "tests/browser/f63-acceptance.spec.ts",
+        "app/style.css"
+      ],
+      "hunks": "Remaining cross-route errors/loading/empty accessibility work and cross-feature test/documentation hunks. Previously staged cases are not duplicate new commits.",
+      "validation": [
+        "npm run typecheck",
+        "npm run lint",
+        "npm run build",
+        "complete isolated browser suite",
+        "no unexpected page errors",
+        "secret scan + git diff --check"
+      ],
+      "snapshotStatus": "PROPOSED - cumulative staged snapshot not created or certified; validate an isolated snapshot before committing"
+    }
+  ],
+  "server": [
+    {
+      "id": "S01",
+      "message": "chore(server): prepare compiled Node 22 runtime and auth contracts",
+      "dependsOn": [],
+      "files": [
+        "package.json",
+        "package-lock.json",
+        ".env.example",
+        ".gitignore",
+        "tsconfig.build.json",
+        "passenger.cjs",
+        "src/domain.ts",
+        "src/auth.ts",
+        "src/local-provider-config.ts"
+      ],
+      "hunks": "Keep required auth/schema dependencies and scripts; node-cron/nodemailer dependency hunks stay with S05. Existing src/local.ts is unchanged.",
+      "validation": [
+        "npm run typecheck",
+        "npm run build",
+        "compiled Passenger/PORT/health smoke without DB secrets"
+      ],
+      "snapshotStatus": "PROPOSED - isolated staged-snapshot validation required"
+    },
+    {
+      "id": "S02",
+      "message": "feat(api): implement scoped rental marketplace and signed payment lifecycle",
+      "dependsOn": [
+        "S01"
+      ],
+      "files": [
+        "src/marketplace.ts",
+        "src/registration-image.ts",
+        "src/app.ts",
+        "tests/marketplace.test.ts",
+        "tests/registration-image.test.ts"
+      ],
+      "hunks": "Current marketplace is one tightly coupled module; treat its routes/transactions/indexes as an atomic integration rather than fake separate whole-file commits. Preserve existing diagnostic middleware hunks.",
+      "validation": [
+        "npm run typecheck",
+        "npm run build",
+        "isolated API/RBAC/filter/pagination/checkout/webhook tests",
+        "required-photo upload origin/size/quota tests"
+      ],
+      "snapshotStatus": "PROPOSED - isolated staged-snapshot validation required"
+    },
+    {
+      "id": "S03",
+      "message": "feat(operator): secure private provider entry and initial Admin planning",
+      "dependsOn": [
+        "S02"
+      ],
+      "files": [
+        "src/admin-bootstrap.ts",
+        "scripts/local-providers.ps1",
+        "tests/f2-security.test.ts",
+        "tests/local-provider-helper.test.ts"
+      ],
+      "hunks": "No actual credential store or production Admin operation included.",
+      "validation": [
+        "npm run typecheck",
+        "npm run build",
+        "DPAPI helper mocked inputs",
+        "test/live key rejection",
+        "bootstrap atomicity/scope/revocation"
+      ],
+      "snapshotStatus": "PROPOSED - isolated staged-snapshot validation required"
+    },
+    {
+      "id": "S04",
+      "message": "feat(fixtures): preserve isolated thirty-item catalog and asset provenance",
+      "dependsOn": [
+        "S03"
+      ],
+      "files": [
+        "scripts/dev-isolated.ts",
+        "scripts/f5-demo-catalog.json",
+        "scripts/prepare-f5-catalog.mjs",
+        "tests/f5-demo.test.ts"
+      ],
+      "hunks": "Only disposable MongoDB runner; source catalog is synthetic, USD demo values explicitly authored.",
+      "validation": [
+        "npm run typecheck",
+        "npm run build",
+        "thirty unique IDs/five per category",
+        "server-enforced six approved featured",
+        "no production URI input"
+      ],
+      "snapshotStatus": "PROPOSED - isolated staged-snapshot validation required"
+    },
+    {
+      "id": "S05",
+      "message": "feat(jobs): prepare isolated completion and mock notification outbox",
+      "dependsOn": [
+        "S04"
+      ],
+      "files": [
+        "src/rental-completion.ts",
+        "src/completion-email.ts",
+        "tests/completion.test.ts",
+        "package.json",
+        "package-lock.json"
+      ],
+      "hunks": "Only exact node-cron/nodemailer dependency changes here; no runtime entry point activates jobs or email.",
+      "validation": [
+        "npm run typecheck",
+        "npm run build",
+        "UTC/eligibility/concurrency/retry/claim-token/idempotency",
+        "responsive escaped HTML/text",
+        "production refusal"
+      ],
+      "snapshotStatus": "PROPOSED - isolated staged-snapshot validation required"
+    },
+    {
+      "id": "S06",
+      "message": "fix(packaging): generate Linux-portable hashed backend archives",
+      "dependsOn": [
+        "S05"
+      ],
+      "files": [
+        "scripts/prepare-exonhost-package.ps1"
+      ],
+      "hunks": "Use slash-separated manifest/ZIP entries with .NET ZIP APIs; exclude private/dev/operator files.",
+      "validation": [
+        "npm run typecheck",
+        "npm run build",
+        "build ZIP + verify every manifest hash",
+        "reject backslash/private/unexpected entries",
+        "compiled startup smoke"
+      ],
+      "snapshotStatus": "PROPOSED - isolated staged-snapshot validation required"
+    },
+    {
+      "id": "S07",
+      "message": "docs(server): consolidate assignment evidence and controlled release plan",
+      "dependsOn": [
+        "S06"
+      ],
+      "files": [
+        "README.md",
+        "docs/F1-audit-and-plan.md",
+        "docs/F1-deployment-readiness.md",
+        "docs/F1-implementation-results.md",
+        "docs/F1-provider-setup.md",
+        "docs/F2-readiness.md",
+        "docs/F3-qa-report.md",
+        "docs/F3-release-plan.md",
+        "docs/F3-requirements-matrix.md",
+        "docs/F4-owner-visual-review.md",
+        "docs/F5-floating-navbar.md",
+        "docs/F5-implementation-and-QA.md",
+        "docs/F5-resource-inventory.md",
+        "docs/F5.1-footer-correction.md",
+        "docs/F5.2-navbar-background.md",
+        "docs/F6-deficiencies.md",
+        "docs/F6.2-verification-and-commit-plan.md",
+        "docs/F6.4-commit-plan.json",
+        "docs/F6.4-release-plan.md",
+        "docs/F6.4-report.md"
+      ],
+      "hunks": "Current reports and genuine history/approval constraints; do not sweep historical network operators into runtime publication.",
+      "validation": [
+        "npm run typecheck",
+        "npm run build",
+        "links/env-name review",
+        "current evidence/counts",
+        "secret and whitespace scans"
+      ],
+      "snapshotStatus": "PROPOSED - isolated staged-snapshot validation required"
+    }
+  ],
+  "deferred": [
+    {
+      "repository": "server",
+      "file": "docs/D0.7-tls-investigation.md",
+      "reason": "Historical/operator scope; explicit review separate from business release and never runtime archive"
+    },
+    {
+      "repository": "server",
+      "file": "docs/D0.9-recovery-assessment.md",
+      "reason": "Historical/operator scope; explicit review separate from business release and never runtime archive"
+    },
+    {
+      "repository": "server",
+      "file": "docs/D1.1-temporary-access-test-plan.md",
+      "reason": "Historical/operator scope; explicit review separate from business release and never runtime archive"
+    },
+    {
+      "repository": "server",
+      "file": "docs/EXONHOST-E5-hostname-result.md",
+      "reason": "Historical/operator scope; explicit review separate from business release and never runtime archive"
+    },
+    {
+      "repository": "server",
+      "file": "docs/EXONHOST-E6-runtime-checkpoint.md",
+      "reason": "Historical/operator scope; explicit review separate from business release and never runtime archive"
+    },
+    {
+      "repository": "server",
+      "file": "docs/EXONHOST-E7-controlled-test.md",
+      "reason": "Historical/operator scope; explicit review separate from business release and never runtime archive"
+    },
+    {
+      "repository": "server",
+      "file": "docs/EXONHOST-E8-production-acceptance.md",
+      "reason": "Historical/operator scope; explicit review separate from business release and never runtime archive"
+    },
+    {
+      "repository": "server",
+      "file": "docs/EXONHOST-release-plan.md",
+      "reason": "Historical/operator scope; explicit review separate from business release and never runtime archive"
+    },
+    {
+      "repository": "server",
+      "file": "scripts/cpanel-readonly.ps1",
+      "reason": "Historical/operator scope; explicit review separate from business release and never runtime archive"
+    },
+    {
+      "repository": "server",
+      "file": "scripts/exonhost-e7-experiment.mjs",
+      "reason": "Historical/operator scope; explicit review separate from business release and never runtime archive"
+    },
+    {
+      "repository": "server",
+      "file": "scripts/exonhost-e7-observer.cjs",
+      "reason": "Historical/operator scope; explicit review separate from business release and never runtime archive"
+    },
+    {
+      "repository": "server",
+      "file": "scripts/exonhost-e8-finalize.mjs",
+      "reason": "Historical/operator scope; explicit review separate from business release and never runtime archive"
+    },
+    {
+      "repository": "server",
+      "file": "scripts/run-d11.mjs",
+      "reason": "Historical/operator scope; explicit review separate from business release and never runtime archive"
+    },
+    {
+      "repository": "server",
+      "file": "tests/exonhost-e7.test.mjs",
+      "reason": "Historical/operator scope; explicit review separate from business release and never runtime archive"
+    },
+    {
+      "repository": "server",
+      "file": "tests/exonhost-e8.test.mjs",
+      "reason": "Historical/operator scope; explicit review separate from business release and never runtime archive"
+    },
+    {
+      "repository": "client",
+      "file": "AGENTS.md",
+      "reason": "Next-generated guidance; owner publication decision, not a feature-count filler"
+    }
+  ]
+}
