@@ -116,6 +116,18 @@ function makeAuth(client: Awaited<ReturnType<typeof getClient>>) {
       enabled: process.env.NODE_ENV !== "test",
       window: 60,
       max: 60,
+      // Every browser request reaches this API through the frontend gateway, so all visitors share the
+      // gateway's address and therefore one rate-limit bucket. Read-only session endpoints (each page load
+      // and each dashboard API call) must not exhaust that shared budget; they require a valid signed
+      // session cookie to return anything. Credential endpoints keep Better Auth's strict defaults
+      // (sign-in/sign-up: 3 per 10 s) unchanged.
+      customRules: {
+        "/get-session": false,
+        "/token": false,
+        "/list-sessions": false,
+        "/jwks": false,
+        "/ok": false,
+      },
     },
   });
 }
