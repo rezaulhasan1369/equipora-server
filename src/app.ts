@@ -21,6 +21,17 @@ import { ZodError } from "zod";
 
 export const app = express();
 app.disable("x-powered-by");
+// Defense in depth for direct API access (the frontend gateway also sets no-store): API responses carry
+// per-user data, so nothing is cacheable by default, and JSON must never be sniffed or framed.
+app.use((_req, res, next) => {
+  res.set({
+    "Cache-Control": "no-store",
+    "X-Content-Type-Options": "nosniff",
+    "X-Frame-Options": "DENY",
+    "Referrer-Policy": "no-referrer",
+  });
+  next();
+});
 // Stream-based authentication and signed Stripe payloads precede JSON parsing.
 app.post("/api/registration-image", registrationImageGuard, express.json({limit:"3mb",inflate:false}), uploadImage);
 app.all("/api/auth/*splat", authHandler);
