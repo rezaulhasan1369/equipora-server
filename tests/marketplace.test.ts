@@ -372,6 +372,26 @@ test("isolated full API: auth, revocation, roles, moderation, favorites, filteri
       200,
     );
     assert.equal(await db.collection("payments").countDocuments({}), 1);
+    // F7.4: actual exported API authentication and participant boundaries.
+    const rentalRecord = (await db.collection('bookings').findOne({reservationId:String(reservationId)}))!;
+    const rentalPath='/api/rentals/'+rentalRecord._id;
+    for(const path of [rentalPath+'/activity',rentalPath+'/receipt','/api/notifications','/api/equipment/'+equipment.id+'/availability?start=2030-01-01&end=2030-01-04&quantity=1'])assert.equal((await request(path)).status,401);
+    for(const token of [customer.token,owner.token]){
+      const activity=await request(rentalPath+'/activity','GET',undefined,token);assert.equal(activity.status,200);const body=await activity.json();assert.ok(body.events.some((e:any)=>e.kind==='payment_confirmed'));assert.ok(!body.events.some((e:any)=>e.kind==='initiated'));assert.equal('customerEmail' in body,false);
+      const receipt=await request(rentalPath+'/receipt','GET',undefined,token);assert.equal(receipt.status,200);assert.equal(receipt.headers.get('cache-control'),'no-store');assert.ok((await receipt.json()).html.includes('$240.00'));
+    }
+    assert.equal((await request(rentalPath+'/activity','GET',undefined,admin.token)).status,403);
+    assert.equal((await request(rentalPath+'/receipt?totalCents=1','GET',undefined,customer.token)).status,400);
+    const inbox=await(await request('/api/notifications','GET',undefined,customer.token)).json();assert.equal(inbox.total,1);assert.equal(inbox.unread,1);const noticeId=inbox.items[0].id;
+    assert.equal((await request('/api/notifications?userId='+customer.id,'GET',undefined,owner.token)).status,400);
+    assert.equal((await request('/api/notifications/'+noticeId+'/read','PATCH',{},owner.token)).status,404);
+    assert.equal((await request('/api/notifications/'+noticeId+'/read','PATCH',{userId:owner.id},customer.token)).status,400);
+    for(let i=0;i<2;i++)assert.equal((await request('/api/notifications/'+noticeId+'/read','PATCH',{},customer.token)).status,200);
+    await db.collection('user').updateOne({_id:new ObjectId(admin.id)},{$set:{role:'customer'}});
+    try {assert.equal((await request(rentalPath+'/activity','GET',undefined,admin.token)).status,404);assert.equal((await request(rentalPath+'/receipt','GET',undefined,admin.token)).status,404);assert.equal((await request('/api/notifications/'+noticeId+'/read','PATCH',{},admin.token)).status,404);}finally{await db.collection('user').updateOne({_id:new ObjectId(admin.id)},{$set:{role:'admin'}})}
+    assert.equal(await db.collection('rental_events').countDocuments({bookingId:String(rentalRecord._id)}),1);assert.equal(await db.collection('rental_notifications').countDocuments({bookingId:String(rentalRecord._id)}),2);
+    const window=await request('/api/equipment/'+equipment.id+'/availability?start=2030-01-01&end=2030-01-04&quantity=1','GET',undefined,customer.token);assert.equal(window.status,200);assert.deepEqual(Object.keys((await window.json()).days[0]).sort(),['available','date','remaining']);
+
     assert.equal(
       (
         await fetch(base + "/api/payments/webhook", {
@@ -436,8 +456,13 @@ test("isolated full API: auth, revocation, roles, moderation, favorites, filteri
     const date = (offset: number) => new Date(Date.now()+offset*86400000).toISOString().slice(0,10);
     await db.collection("bookings").updateOne({_id:rental._id}, {$set:{start:date(-2),end:date(1)}});
     assert.equal((await request("/api/admin/rentals/" + rental._id, "PATCH", {status:"ongoing"}, admin.token)).status, 200);
+    assert.equal((await request("/api/admin/rentals/" + rental._id, "PATCH", {status:"ongoing"}, admin.token)).status, 200);
+    assert.equal(await db.collection('rental_events').countDocuments({bookingId:String(rental._id),kind:'ongoing'}),1);
     await db.collection("bookings").updateOne({_id:rental._id}, {$set:{end:date(-1)}});
     assert.equal((await request("/api/admin/rentals/" + rental._id, "PATCH", {status:"completed"}, admin.token)).status, 200);
+    assert.equal((await request("/api/admin/rentals/" + rental._id, "PATCH", {status:"completed"}, admin.token)).status, 200);
+    assert.equal(await db.collection('rental_events').countDocuments({bookingId:String(rental._id)}),3);
+    assert.equal(await db.collection('rental_notifications').countDocuments({bookingId:String(rental._id)}),6);
     for (const principal of [owner, admin]) {
       const analytics = await (await request("/api/analytics", "GET", undefined, principal.token)).json();
       assert.equal(analytics.users, principal === admin ? 3 : 0);

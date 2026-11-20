@@ -5,6 +5,7 @@ import { randomUUID } from "node:crypto";
 import { completionTemplate, type CompletionEmailService } from "./completion-email.js";
 export { simulationMailer } from "./completion-email.js";
 import { z } from "zod";
+import { recordRentalEvent } from "./rental-events.js";
 
 export type SimulationMailer = CompletionEmailService;
 type Notice = Document & { _id: string; userId: string; equipmentName: string; status: string; attempts: number };
@@ -26,8 +27,9 @@ export async function completeRentals(db: Db, mailer: SimulationMailer, now = ne
     const changed = await db.client.withSession(session => session.withTransaction(async () => {
       const result = await db.collection("bookings").updateOne({ _id: booking._id, paymentStatus: "paid",
         completionQueued: { $ne: true }, bookingStatus: { $in: ["confirmed", "ongoing", "completed"] } },
-      { $set: { bookingStatus: "completed", completionQueued: true, completedAt: now } }, { session });
+      { $set: { bookingStatus: "completed", completionQueued: true, ...(booking.bookingStatus !== 'completed' ? {completedAt: now} : {}) } }, { session });
       if (!result.modifiedCount) return false;
+      if(booking.bookingStatus !== 'completed')await recordRentalEvent(db, booking, 'completed', now, session);
       for (const role of ["customer", "owner"] as const) {
         await notices.updateOne({ _id: `${booking._id}:${role}` }, { $setOnInsert: {
           userId: String(booking[`${role}Id`]), equipmentName: String(booking.equipmentName).slice(0, 120),

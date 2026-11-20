@@ -10,6 +10,8 @@ import { z } from "zod";
 import Stripe from "stripe";
 import { isStripeTestSecret } from "./local-provider-config.js";
 import { getClient } from "./db.js";
+import { rentalExperienceRouter } from "./rental-experience.js";
+import { ensureRentalEventIndexes, recordRentalEvent } from "./rental-events.js";
 import {
   HttpError,
   verifyToken,
@@ -28,6 +30,7 @@ import {
   roles,
 } from "./domain.js";
 const router = express.Router();
+router.use(rentalExperienceRouter);
 const oid = (value: unknown) => {
   if (typeof value !== "string" || !/^[a-f0-9]{24}$/i.test(value))
     throw new HttpError(400, "Invalid identifier");
@@ -89,6 +92,7 @@ export function stripe() {
 }
 export async function ensureMarketplaceIndexes(db: Db) {
   await Promise.all([
+    ensureRentalEventIndexes(db),
     db.collection("equipment").createIndex({ status: 1, createdAt: -1 }),
     db.collection("equipment").createIndex({ ownerId: 1 }),
     db
@@ -447,6 +451,9 @@ export async function reserve(
   const reservation = {
     ...input,
     ...price,
+    unitPriceCents: Math.round(item.price * 100),
+    rentalType: item.rentalType,
+    currency: "usd",
     equipmentName: item.name,
     ownerId: item.ownerId,
     ownerName: item.ownerName,
@@ -629,14 +636,15 @@ export async function fulfill(
       { session },
     );
   const { _id, status, ...booking } = reservation;
-  await db.collection("bookings").insertOne(
+  const recordedAt = new Date();
+  const recordedBooking = await db.collection("bookings").insertOne(
     {
       ...booking,
       reservationId: String(_id),
       sessionId: checkout.id,
       paymentStatus: "paid",
       bookingStatus: "confirmed",
-      bookingDate: new Date(),
+      bookingDate: recordedAt,
     },
     { session },
   );
@@ -652,10 +660,12 @@ export async function fulfill(
       ownerId: reservation.ownerId,
       totalCents: reservation.totalCents,
       currency: "usd",
-      createdAt: new Date(),
+      livemode: checkout.livemode,
+      createdAt: recordedAt,
     },
     { session },
   );
+  await recordRentalEvent(db, { ...booking, _id: recordedBooking.insertedId }, "payment_confirmed", recordedAt, session);
 }
 export async function stripeWebhook(
   req: express.Request,
@@ -819,9 +829,10 @@ router.patch(
       throw new HttpError(409, "Rental period has not ended");
     if (status === "ongoing" && (booking.start > today || booking.end <= today))
       throw new HttpError(409, "Rental is outside its active period");
-    await db
-      .collection("bookings")
-      .updateOne({ _id: booking._id }, { $set: { bookingStatus: status } });
+    await db.client.withSession(session => session.withTransaction(async () => {
+      const changed = await db.collection("bookings").updateOne({ _id: booking._id, bookingStatus: { $ne: status } }, { $set: { bookingStatus: status } }, {session});
+      if(changed.modifiedCount)await recordRentalEvent(db, booking, status, new Date(), session);
+    }));
     res.json({ ok: true });
   },
 );
