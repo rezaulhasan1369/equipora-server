@@ -5,7 +5,7 @@ import { ObjectId } from "mongodb";
 import { once } from "node:events";
 import { app } from "../src/app.js";
 import { getClient } from "../src/db.js";
-import { rentalPrice, catalogQuery } from "../src/domain.js";
+import { rentalPrice, catalogQuery, rentalQuoteSchema, bookingSchema } from "../src/domain.js";
 import {
   fulfill,
   ensureMarketplaceIndexes,
@@ -24,6 +24,12 @@ test("rental pricing uses explicit end-exclusive periods and whole billing units
   assert.throws(() => rentalPrice(10, "daily", "2030-01-01", "2030-01-01", 1));
   assert.equal(catalogQuery({ featured: "true", limit: "24" }).limit, 6);
   assert.throws(() => catalogQuery({ min: "20", max: "10" }));
+});
+test("quote inputs keep strict booking-period validation and cannot accept caller prices", () => {
+  const input = {start: "2030-01-01", end: "2030-01-03", quantity: 2};
+  assert.deepEqual(rentalQuoteSchema.parse(input), input);
+  for (const invalid of [{...input, end: input.start}, {...input, start: "2000-01-01"}, {...input, quantity: 0}, {...input, quantity: 1.5}, {...input, start: "2030-02-30"}, {...input, totalCents: 1}])
+    assert.equal(rentalQuoteSchema.safeParse(invalid).success, false);
 });
 test("isolated full API: auth, revocation, roles, moderation, favorites, filtering and signed payment fulfillment", async () => {
   const replica = await MongoMemoryReplSet.create({
@@ -196,6 +202,43 @@ test("isolated full API: auth, revocation, roles, moderation, favorites, filteri
       )
     ).json();
     assert.equal(catalog.total, 1);
+    // Selection restores public approved listings only, without creating history.
+    const pending = new ObjectId(), deleted = new ObjectId(), unavailable = new ObjectId();
+    await db.collection("equipment").insertMany([
+      {...item, _id: pending, status: "pending"},
+      {...item, _id: deleted, status: "approved", deleted: true},
+      {...item, _id: unavailable, status: "approved", quantity: 0},
+    ]);
+    const selected = await (await request(`/api/equipment/selection?ids=${equipment.id.toUpperCase()},${pending},${deleted},${unavailable},${equipment.id}`)).json();
+    assert.deepEqual(selected.items.map((i: {id: string}) => i.id), [equipment.id, String(unavailable)]);
+    assert.equal(selected.items[1].quantity, 0);
+    for (const hiddenId of [pending, deleted])
+      assert.equal((await request(`/api/equipment/${hiddenId}/quote`, "POST", {start:"2030-01-01",end:"2030-01-03",quantity:1}, customer.token)).status, 404);
+    for (const query of ["ids=bad", `ids=${Array(9).fill(equipment.id).join(",")}`, `ids=${equipment.id}&ids=${equipment.id}`, `ids=${equipment.id}&url=http://example.test`])
+      assert.equal((await request('/api/equipment/selection?' + query)).status, 400);
+    assert.deepEqual((await (await request(`/api/equipment/selection?ids=${new ObjectId()}`)).json()).items, []);
+    await db.collection("equipment").deleteMany({_id: {$in: [pending, deleted, unavailable]}});
+    const quotePath = `/api/equipment/${equipment.id}/quote`, period = {start: "2030-01-01", end: "2030-01-03", quantity: 2};
+    assert.equal((await request(quotePath, "POST", period)).status, 401);
+    for (const principal of [owner, admin]) assert.equal((await request(quotePath, "POST", period, principal.token)).status, 403);
+    const reservationCount = await db.collection("reservations").countDocuments({});
+    for (const [rentalType, end, days, units] of [["daily", "2030-01-03", 2, 2], ["weekly", "2030-01-09", 8, 2], ["monthly", "2030-02-01", 31, 2]] as const) {
+      await db.collection("equipment").updateOne({_id: new ObjectId(equipment.id)}, {$set: {rentalType}});
+      const response = await request(quotePath, "POST", {...period, end}, customer.token);
+      assert.equal(response.status, 200);
+      const quote = await response.json();
+      assert.equal(quote.totalCents, 48000); assert.equal(quote.subtotalCents, 48000);
+      assert.equal(quote.days, days); assert.equal(quote.units, units); assert.equal(quote.unitPriceCents, 12000);
+      assert.equal(quote.totalCents, rentalPrice(item.price, rentalType, period.start, end, 2).totalCents);
+      assert.equal(quote.equipmentId, equipment.id); assert.equal(quote.estimate, true);
+    }
+    await db.collection("equipment").updateOne({_id: new ObjectId(equipment.id)}, {$set: {rentalType: "daily"}});
+    assert.equal((await request(quotePath, "POST", {...period, quantity: 3}, customer.token)).status, 409);
+    assert.equal((await request(quotePath, "POST", {...period, totalCents: 1}, customer.token)).status, 400);
+    assert.equal((await request(quotePath, "POST", {...period, end: "2032-01-01"}, customer.token)).status, 400);
+    assert.equal((await request(`/api/equipment/${new ObjectId()}/quote`, "POST", period, customer.token)).status, 404);
+    assert.equal(await db.collection("reservations").countDocuments({}), reservationCount);
+    assert.equal(await db.collection("payments").countDocuments({}), 0);
     assert.equal((await request("/api/equipment?sort=invalid")).status, 400);
     assert.equal(
       (
@@ -268,21 +311,21 @@ test("isolated full API: auth, revocation, roles, moderation, favorites, filteri
     );
     assert.equal(await db.collection("bookings").countDocuments({}), 1);
     assert.equal(await db.collection("payments").countDocuments({}), 1);
-    const reserveOnce = () =>
+    const reserveOnce = (uppercase = false) =>
       client!.withSession((session) =>
         session.withTransaction(() =>
           reserve(
             db,
             session,
-            {
-              equipmentId: equipment.id,
+            bookingSchema.parse({
+              equipmentId: uppercase ? equipment.id.toUpperCase() : equipment.id,
               start: "2030-02-01",
               end: "2030-02-03",
               quantity: 1,
               phone: "0123456789",
               address: "Local test address",
               notes: "",
-            },
+            }),
             {
               id: customer.id,
               role: "customer",
@@ -294,7 +337,7 @@ test("isolated full API: auth, revocation, roles, moderation, favorites, filteri
       );
     const reservations = await Promise.allSettled([
       reserveOnce(),
-      reserveOnce(),
+      reserveOnce(true),
       reserveOnce(),
     ]);
     assert.equal(

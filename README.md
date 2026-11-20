@@ -78,3 +78,15 @@ See [F5 implementation and QA](docs/F5-implementation-and-QA.md) and [resource i
 Current evidence is in [the consolidated matrix](docs/F6-deficiencies.md), [F6.4 report](docs/F6.4-report.md), [exact commit scopes](docs/F6.4-commit-plan.json) and [release/rollback plan](docs/F6.4-release-plan.md). All four optional features pass local/mock acceptance; production scheduling and real delivery are disabled and need reviewed integration. BetterAuth 1.7.25 keeps login-email changes disabled until a secure reauthentication/address-confirmation/session workflow is approved. No ordinary login email-verification/reset gate is added.
 
 Prepare a backend candidate locally with `powershell.exe -NoProfile -ExecutionPolicy Bypass -File scripts/prepare-exonhost-package.ps1`. It builds compiled JavaScript, uses portable ZIP/manifest paths and excludes private/dev/operator files. Inspect and verify every hash before any approved upload. This command is local preparation, not deployment; Linux production dependency installation and actual hosted smoke tests are still required. Never run local fixtures against Atlas or submit fixture credentials.
+
+## F7.2 local discovery and estimates
+
+`GET /api/equipment/selection?ids=...` accepts at most eight comma-separated equipment IDs,
+returns only current approved, non-deleted catalog records in the requested order and
+does not save browsing history. The client persists only bounded equipment IDs on the device.
+`POST /api/equipment/:id/quote` is Customer-authenticated and read-only. It accepts only
+start/end/quantity, uses the same validated period rules and `rentalPrice` as checkout,
+and returns an explicitly estimated breakdown. It creates no holds or payments;
+checkout still performs transactional date-specific availability and final-price checks.
+No taxes, delivery fees or other charges were added. These local endpoint additions
+require reviewed backend release before the corresponding frontend is published.

@@ -57,20 +57,28 @@ const day = z
       new Date(v).toISOString().slice(0, 10) === v,
     "Invalid date",
   );
+const rentalPeriodFields = {
+  start: day,
+  end: day,
+  quantity: z.number().int().min(1).max(10000),
+};
+const validRentalPeriod = (v: { start: string; end: string }) =>
+  v.end > v.start && v.start >= new Date().toISOString().slice(0, 10);
+const rentalPeriodMessage = "Choose a future start and a later end date";
+export const rentalQuoteSchema = z.object(rentalPeriodFields).strict()
+  .refine(validRentalPeriod, rentalPeriodMessage);
 export const bookingSchema = z
   .object({
-    equipmentId: z.string().regex(/^[a-f0-9]{24}$/i),
-    start: day,
-    end: day,
-    quantity: z.number().int().min(1).max(10000),
+    equipmentId: z.string().regex(/^[a-f0-9]{24}$/i).transform(value => value.toLowerCase()),
+    ...rentalPeriodFields,
     phone: z.string().trim().min(6).max(30),
     address: z.string().trim().min(5).max(300),
     notes: z.string().trim().max(1000).default(""),
   })
   .strict()
   .refine(
-    (v) => v.end > v.start && v.start >= new Date().toISOString().slice(0, 10),
-    "Choose a future start and a later end date",
+    validRentalPeriod,
+    rentalPeriodMessage,
   );
 export function rentalPrice(
   price: number,

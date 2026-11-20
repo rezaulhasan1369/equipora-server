@@ -24,6 +24,7 @@ import {
   equipmentSchema,
   profileSchema,
   rentalPrice,
+  rentalQuoteSchema,
   roles,
 } from "./domain.js";
 const router = express.Router();
@@ -133,6 +134,34 @@ router.get("/equipment", async (req, res) => {
     db.collection("equipment").countDocuments(q.filter),
   ]);
   res.json({ items: items.map(dto), total, page: q.page, limit: q.limit });
+});
+// Fixed, bounded identifiers only. The same public approval rules as the catalog
+// apply even when the caller is an Owner/Admin restoring local browser history.
+router.get("/equipment/selection", async (req, res) => {
+  const input = z.object({ ids: z.string().max(199)
+    .regex(/^[a-f0-9]{24}(,[a-f0-9]{24}){0,7}$/i) }).strict().parse(req.query);
+  const ids = [...new Set(input.ids.toLowerCase().split(","))];
+  const items = await (await database()).collection("equipment").find({
+    _id: { $in: ids.map(id => new ObjectId(id)) }, status: "approved", deleted: { $ne: true },
+  }).limit(8).toArray();
+  const byId = new Map(items.map(item => [String(item._id), dto(item)]));
+  res.set("Cache-Control", "no-store").json({ items: ids.flatMap(id => byId.has(id) ? [byId.get(id)!] : []) });
+});
+router.post("/equipment/:id/quote", verifyToken, verifyRenter, async (req, res) => {
+  const input = rentalQuoteSchema.parse(req.body);
+  const item = await (await database()).collection("equipment").findOne({
+    _id: oid(req.params.id), status: "approved", deleted: { $ne: true },
+  });
+  if (!item) throw new HttpError(404, "Equipment not found");
+  if (input.quantity > item.quantity) throw new HttpError(409, "Requested quantity is unavailable");
+  let price;
+  try { price = rentalPrice(item.price, item.rentalType, input.start, input.end, input.quantity); }
+  catch { throw new HttpError(400, "Invalid rental period"); }
+  res.set("Cache-Control", "no-store").json({
+    equipmentId: String(item._id), ...input, ...price,
+    unitPriceCents: Math.round(item.price * 100), rentalType: item.rentalType,
+    subtotalCents: price.totalCents, estimate: true,
+  });
 });
 router.get("/equipment/:id", verifyToken, async (req, res) => {
   const item = await (
