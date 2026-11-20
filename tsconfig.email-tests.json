@@ -1,0 +1,8 @@
+{
+  "extends": "./tsconfig.json",
+  "include": [
+    "src/completion-email.ts",
+    "playwright.email.config.ts",
+    "tests/browser/completion-email.spec.ts"
+  ]
+}

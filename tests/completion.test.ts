@@ -14,6 +14,44 @@ test("responsive completion templates escape HTML, include plain text and distin
   }
 });
 
+test("missing recipient name uses the role fallback; missing email fails safely without delivery", async () => {
+  const previous = process.env.NODE_ENV;
+  process.env.NODE_ENV = "test";
+  const replica = await MongoMemoryReplSet.create({ replSet: { count: 1 } });
+  const client = await new MongoClient(replica.getUri()).connect();
+  try {
+    const db = client.db("equipora_f62_missing_notification"), customer = new ObjectId(), owner = new ObjectId();
+    await db.collection("user").insertMany([
+      { _id: customer, email: "customer@example.test" },
+      { _id: owner, name: "Local Owner", email: "owner@example.test" },
+    ]);
+    const base = { ownerId: String(owner), equipmentName: "Local Loader", end: "2026-11-18", bookingStatus: "confirmed", paymentStatus: "paid" };
+    await db.collection("bookings").insertOne({ ...base, customerId: String(customer) });
+    const messages: { to: string; text: string; html: string }[] = [];
+    const mailer = simulationMailer(message => messages.push(message)), now = new Date("2026-11-19T00:00:00Z");
+    const complete = await completeRentals(db, mailer, now);
+    assert.equal(complete.delivered, 2);
+    assert.ok(messages.find(message => message.to === "customer@example.test")?.text.includes("Hello customer,"));
+    assert.ok(messages.find(message => message.to === "owner@example.test")?.text.includes("Hello Local Owner,"));
+    assert.ok(messages.every(message => message.text.includes("Local Loader") && message.html.includes("Local Loader")));
+    assert.ok(messages.every(message => !/undefined|null/.test(message.html + message.text)));
+
+    const missingEmail = new ObjectId();
+    await db.collection("user").insertOne({ _id: missingEmail, name: "Missing Email" });
+    await db.collection("bookings").insertOne({ ...base, customerId: String(missingEmail) });
+    const rejected = await completeRentals(db, mailer, now);
+    assert.equal(rejected.failed, 1);
+    assert.equal(rejected.delivered, 0);
+    assert.equal(messages.length, 2);
+    assert.equal(await db.collection("completion_notifications").countDocuments({ category: "notification_failed", status: "pending", attempts: 1 }), 1);
+    assert.equal(await db.collection("payments").countDocuments({}), 0);
+    assert.equal(await db.collection("reservations").countDocuments({}), 0);
+  } finally {
+    await client.close(); await replica.stop();
+    if (previous === undefined) delete process.env.NODE_ENV; else process.env.NODE_ENV = previous;
+  }
+});
+
 test("isolated scheduled completion: paid/end boundaries, both recipients, retries, concurrency and no financial writes", async () => {
   const old = process.env.NODE_ENV; process.env.NODE_ENV = "test";
   const replica = await MongoMemoryReplSet.create({ replSet: { count: 1 } });

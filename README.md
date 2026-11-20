@@ -42,6 +42,13 @@ npm audit --omit=dev
 
 `npm test` uses a separate ephemeral replica set for marketplace tests, covering registration, JWT/roles, session revocation, filtering, moderation, favorites, concurrent reservations and signed duplicate-safe payment fulfillment. Existing diagnostic regression tests use mocks. Neither test path imports `.env` or writes to Atlas.
 
+Email-template browser acceptance belongs to this repository. With local Chrome installed,
+run `npm run test:email-browser` for explicit test typechecking plus real Playwright/axe
+checks of both recipient variants at mobile, tablet and desktop widths. It renders
+synthetic HTML locally without SMTP or an application server. `npm run test:all`
+runs the backend regressions and these browser cases. Generated output stays in
+ignored `.netlify/email-browser`; no adjacent client checkout is required.
+
 ## Contract and configuration
 
 See [F1 audit and requirements](docs/F1-audit-and-plan.md), [deployment and rollback](docs/F1-deployment-readiness.md) and [manual provider setup](docs/F1-provider-setup.md). `.env.example` contains names and blank placeholders only. The frontend uses same-origin gateways; no diagnostic, MongoDB, Google secret, imgbb key or Stripe secret belongs in `NEXT_PUBLIC_*`.
