@@ -146,6 +146,10 @@ if (process.argv.includes("--catalog=f5")) {
   });
 }
 await db.collection("equipment").insertMany(equipment);
+if(process.argv.includes('--experience=f74')){
+  const { seedF74Rentals } = await import('./f74-demo-rentals.js');
+  await seedF74Rentals(db);
+}
 const server = app.listen(5090, "127.0.0.1", () =>
   console.log(
     JSON.stringify({
