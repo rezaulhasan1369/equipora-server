@@ -1,6 +1,26 @@
-# Equipora — Final Project Completion Report (F14)
+# Equipora — Final Project Completion Report (F14, updated after F13/F15)
 
 Autonomous completion run: 2026-11-20 → 2026-11-21 (Asia/Dhaka). Assignment deadline: 2026-11-22 23:59 BDT.
+
+## 0. Final status (supersedes the F14 snapshot below where they differ) — 2026-11-21
+
+| Item | Status | Evidence |
+|---|---|---|
+| **F13 initial Admin** | **PASS** (owner-reported acceptance + automated evidence) | Owner ran `f13:apply` once: `PROMOTED`, account hash `2b1b27f8fc02`, `customer`→`admin`, 0 remaining sessions, bootstrap marker present, single one-shot lock. Owner reports Admin dashboard, user management, authentication and browser checks working. Cleanup done (script, target and confirm files removed; release `package.json` restored; `0600` audit files and lock kept). No role changes or rollback since. |
+| **F15 demonstration inventory** | **PASS** | Owner ran `f15:demo-inventory` once: `SEEDED`, 30 inserted / 30 approved. Public API: 30 listings, 5 per category, all `demoOnly`, `seedBatch: f15-demo`, "Synthetic portfolio listing" disclosure, owner display "Equipora demonstration inventory". Featured = 6 items, 6 categories. Search/filter/sort, compare/recent selection, local licensed images (credits at `/asset-credits`) work; detail page and detail API require login (redirect / 401). Script only inserts equipment — no users, bookings or payments; rollback (script retained, inert) removes only the batch. |
+| **UI/UX** | **FROZEN** | Final mobile admin refinement live: client `9dca8ca`, Vercel deployment `BiLz1ZoJAo95W8VEaQADqK6DbDzN`. Only critical functional/security/accessibility fixes may follow. |
+| Git | client `main` = `9dca8ca3d4c9` (29 commits); server `main` = `13f5559` + this report's docs commit | pushed fast-forward, no force; `AGENTS.md` and private infra files preserved untracked |
+| Production | healthy | API/DB/auth/CORS OK, no new error logs, `.env` unchanged, backend runtime release `e582e0a`; `mziae.com` unchanged |
+| Tests (latest) | server `npm test` 43/43 · client unit 14/14 · TypeScript/lint/build/audit pass · browser 166/166 (isolated stack) | |
+
+**Requirements now:** 171 detail rows → **168 PASS · 3 PARTIAL**. Newly PASS: G18/S01/S02 (Admin account exists and is owner-held — submit privately), H05 production featured six, G06 (owner approved and froze the design).
+Remaining PARTIAL: **P09** hosted Stripe configuration, **C04/PRO2** profile email editing (deliberately read-only for security).
+
+**Remaining owner-only blockers for full hosted functionality:**
+1. **Google sign-in (production):** add origin `https://equipora-client.vercel.app` and redirect `https://equipora-client.vercel.app/api/auth/callback/google` in Google Cloud Console; approve copying the stored Google client ID/secret to the production `.env`. Until then email/password login works; the Google button reports unavailable.
+2. **Stripe test payments (production):** rotate the exposed webhook secret, create endpoint `https://api.mziae.com/api/payments/webhook` (completed / async_payment_succeeded / expired), approve adding the test key + endpoint secret. Until then "Continue to Stripe Checkout" returns "Stripe test payments are not configured" (no transactions are faked).
+
+**Submission readiness:** READY for Programming Hero submission with the live site, both repositories and the owner's Admin credentials; Google sign-in and live sandbox checkout are configuration-dependent (items 1–2) and should be configured before the examiner tests them if time allows.
 
 ## 1. Executive summary
 
@@ -96,7 +116,7 @@ Earlier in this session (already published before F14): F12.2 registration photo
 | Repository | Branch | HEAD | Push |
 |---|---|---|---|
 | client `rezaulhasan1369/equipora-client` | `main` | `30e7b9960381d8dd5acfaa9ed481662e5c2cca4b` (28 commits) | fast-forward, no force; remote == local |
-| server `rezaulhasan1369/equipora-server` | `main` | see `git log` (22 commits incl. the F14 docs commit) | fast-forward, no force; remote == local |
+| server `rezaulhasan1369/equipora-server` | `main` | `ce3a66bfe7e0c8a37f763b712067d8e132b42f58` (22 commits incl. the F14 docs commit; runtime code = release `e582e0a`) | fast-forward, no force; remote == local |
 
 Working trees: client keeps the owner's untracked `AGENTS.md`; server keeps the untracked private ExonHost/Atlas
 investigation docs and operator scripts (intentionally never committed — they contain infrastructure identifiers).
